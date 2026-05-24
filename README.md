@@ -114,9 +114,9 @@ A primary design principle of this workspace is the decoupling of core business 
 - **Deployment**: Can be embedded directly inside standard Python CLI scripts, custom Flask/FastAPI backends, or containerized microservices running on Google Cloud Run.
 - **Execution**: By calling `audit_invoice_tool()` or `run_adk_orchestrator()` directly, developers bypass the agent engine, ADK, and A2A infrastructure, using the codebase as a deterministic invoice auditing library.
 - **Use Case**: Automated batch cron jobs, backend bulk document pipelines, or integration with existing custom ERP systems.
-- **Example**: Below is a standalone invoice auditing web application styled after the GameStop brand aesthetic, executing the core multi-agent parsing pipeline containerized on Google Cloud Run:
+- **Example**: Below is a standalone invoice auditing web application styled with a sleek dark theme, executing the core multi-agent parsing pipeline containerized on Google Cloud Run:
 
-![Standalone GameStop Application on Cloud Run](assets/standalone_gamestop_app.png)
+![Standalone Application on Cloud Run](assets/standalone_invoice_app.png)
 
 
 
@@ -181,8 +181,8 @@ STORAGE_BUCKET=gs://<YOUR_STAGING_BUCKET_NAME>
 GEMINI_ENTERPRISE_APP_ID=<GEMINI_ENTERPRISE_APP_ID>
 
 # 3. Google Cloud Storage (GCS) Archival Buckets
-NESS_PROCESSED_DOCS_BUCKET=gamestop-processed-docs-<GCP_PROJECT_ID>
-NESS_HUMAN_REVIEW_BUCKET=gamestop-review-docs-<GCP_PROJECT_ID>
+NESS_PROCESSED_DOCS_BUCKET=invoice-processed-docs-<GCP_PROJECT_ID>
+NESS_HUMAN_REVIEW_BUCKET=invoice-review-docs-<GCP_PROJECT_ID>
 
 # 4. JIRA Integration credentials
 JIRA_EMAIL=<USER_EMAIL>
