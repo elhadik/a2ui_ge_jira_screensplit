@@ -1,0 +1,13 @@
+google-cloud-aiplatform[agent_engines,adk]>=1.128.0
+google-genai>=1.0.0
+python-dotenv>=1.0.0
+uvicorn>=0.20.0
+a2a-sdk>=0.3.26
+cloudpickle>=3.0.0
+pydantic>=2.0.0
+jsonschema>=4.0.0
+a2ui-agent-sdk>=0.2.1
+fastapi>=0.100.0
+atlassian-python-api>=3.41.16
+Pillow>=10.0.0
+google-cloud-storage>=2.0.0

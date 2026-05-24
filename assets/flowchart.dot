@@ -1,0 +1,38 @@
+digraph G {
+    bgcolor="#1e1e1e"
+    node [fontname="Roboto,Helvetica,Arial", fontsize=10, shape=box, style="filled,rounded", color="#ffffff", fontcolor="#ffffff"]
+    edge [fontname="Roboto,Helvetica,Arial", fontsize=9, color="#aaaaaa", fontcolor="#aaaaaa", arrowhead=normal]
+
+    // Nodes
+    User [label="User\n(Gemini Chat / adk web)", fillcolor="#333333", shape=ellipse]
+    
+    Orchestrator [label="orchestrator (Root Agent)\nStoreInvoiceAuditorAgent", fillcolor="#1a73e8", penwidth=1.5]
+    
+    Extractor [label="data_extractor (Specialist)\nRetail OCR parser", fillcolor="#4285f4"]
+    Validator [label="validator (Specialist)\nImage validation auditor", fillcolor="#4285f4"]
+    ScoringRouter [label="scoring_router (Specialist)\nGCS routing coordinator", fillcolor="#4285f4"]
+    JiraAgent [label="jira_agent (Specialist)\nSupport ticket assistant", fillcolor="#4285f4"]
+    
+    DocAI [label="Document AI OCR Client\n(document_parser.py)", fillcolor="#34a853"]
+    Gemini [label="Gemini Visual Validator\n(gemini_parser.py)", fillcolor="#34a853"]
+    
+    GCS [label="Google Cloud Storage\n(Processed / Review)", fillcolor="#ea4335"]
+    Jira [label="Atlassian JIRA Client\n(Automated Ticketing)", fillcolor="#ea4335"]
+
+    // Links
+    User -> Orchestrator [label="Upload receipt & query"]
+    
+    Orchestrator -> Extractor [label="1. Delegate extraction"]
+    Extractor -> DocAI [label="Call extract_data_tool"]
+    
+    Orchestrator -> Validator [label="2. Delegate validation"]
+    Validator -> Gemini [label="Call validate_data_tool"]
+    
+    Orchestrator -> ScoringRouter [label="3. Delegate GCS routing"]
+    ScoringRouter -> GCS [label="Call route_document_tool"]
+    
+    ScoringRouter -> JiraAgent [label="4. Delegate on discrepancy (Score < 3)"]
+    JiraAgent -> Jira [label="Call create_jira_ticket_tool"]
+    
+    Orchestrator -> User [label="Render markdown summary & visual Vega-Lite chart"]
+}

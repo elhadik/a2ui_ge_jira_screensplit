@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="mermaid.min.js"></script>
+    <style>
+        body { background-color: #1e1e1e; color: #ffffff; margin: 20px; display: inline-block; }
+        .mermaid { background-color: #1e1e1e; padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="mermaid" id="diagram">
+sequenceDiagram
+    autonumber
+    actor User as User (Gemini Chat)
+    participant GE as Gemini Enterprise (GE)
+    participant Agent as StoreInvoiceAuditorAgent
+    participant Ext as data_extractor (Specialist)
+    participant Val as validator (Specialist)
+    participant Route as scoring_router (Specialist)
+    participant Jira as jira_agent (Specialist)
+
+    User->>GE: Upload receipt & Query
+    GE->>Agent: A2A request (Text & GCS File link)
+    Agent->>Agent: Intercept file link in-memory
+    
+    Agent->>Ext: 1. Delegate OCR extraction (extract_data_tool)
+    Ext-->>Agent: Return Extracted JSON
+    
+    Agent->>Val: 2. Delegate visual validation (validate_data_tool)
+    Val-->>Agent: Return Validation JSON (Score 1-3)
+    
+    Agent->>Route: 3. Delegate GCS routing (route_document_tool)
+    Route->>Route: Archive Processed / Review GCS file
+    
+    alt Validation Score < 3 (Discrepancy flagged)
+        Route->>Jira: 4. Delegate ticketing (create_jira_ticket_tool)
+        Jira->>Jira: Log Task on Atlassian Cloud Board
+        Jira-->>Route: Return JIRA Key (KAN-X)
+    end
+    
+    Route-->>Agent: Return GCS & JIRA ticket status
+    
+    Note right of Agent: A2UI Graph Creation:<br/>1. Parse extracted line items<br/>2. Generate Vega-Lite Pie Chart Spec<br/>3. Package into A2UI Component Card<br/>4. Wrap in &lt;a2ui-json&gt; ... &lt;/a2ui-json&gt;
+    Agent->>Agent: Compile A2UI Declarative JSON Payload
+    
+    Agent-->>GE: A2A response (Markdown Summary + <a2ui-json>)
+    GE->>GE: 5. A2UI Extension Renders Vega-Lite Pie Chart
+    GE-->>User: Render chat audit summary & interactive A2UI chart widget!
+    </div>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+</body>
+</html>

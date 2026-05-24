@@ -1,0 +1,37 @@
+[
+  { "beginRendering": { "surfaceId": "vega-chart-demo", "root": "root" } },
+  { "surfaceUpdate": {
+      "surfaceId": "vega-chart-demo",
+      "components": [
+        { "id": "root", "component": { "Column": { "children": { "explicitList": ["title-1", "chart-card-1"] } } } },
+        { "id": "title-1", "component": { "Text": { "text": { "literalString": "Demo Vega Chart" }, "usageHint": "h3" } } },
+        { "id": "chart-card-1", "component": { "Card": { "child": "price-chart-1" } } },
+        { "id": "price-chart-1", "component": {
+            "VegaChart": {
+                "spec": {
+                    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+                    "width": "container",
+                    "height": 200,
+                    "data": {
+                      "values": [
+                        { "category": "A", "value": 28 },
+                        { "category": "B", "value": 55 },
+                        { "category": "C", "value": 43 },
+                        { "category": "D", "value": 91 },
+                        { "category": "E", "value": 81 },
+                        { "category": "F", "value": 53 },
+                        { "category": "G", "value": 19 },
+                        { "category": "H", "value": 87 }
+                      ]
+                    },
+                    "mark": "bar",
+                    "encoding": {
+                      "x": { "field": "category", "type": "nominal" },
+                      "y": { "field": "value", "type": "quantitative" }
+                    }
+                }
+            }
+        } }
+      ]
+  } }
+]

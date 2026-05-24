@@ -1,0 +1,78 @@
+{
+    "document_type": "Invoice",
+    "entities": [
+        {
+            "type": "supplier_name",
+            "mention_text": "GLOBAL SOLUTIONS INC."
+        },
+        {
+            "type": "supplier_address",
+            "mention_text": "123 Tech Way, San Francisco, CA 94105, USA"
+        },
+        {
+            "type": "supplier_website",
+            "mention_text": "glebalsolutionsinc.co"
+        },
+        {
+            "type": "supplier_email",
+            "mention_text": "contact@globalsolutionsinc.co"
+        },
+        {
+            "type": "customer_name",
+            "mention_text": "RETAIL SYSTEMS CORP."
+        },
+        {
+            "type": "customer_address",
+            "mention_text": "456 Commerce Blvd. Chicago, IL 60611, USA"
+        },
+        {
+            "type": "invoice_number",
+            "mention_text": "INV-2026-009"
+        },
+        {
+            "type": "invoice_date",
+            "mention_text": "May 22, 2026"
+        },
+        {
+            "type": "due_date",
+            "mention_text": "June 22, 2026"
+        },
+        {
+            "type": "subtotal_amount",
+            "mention_text": "$24,150.00"
+        },
+        {
+            "type": "tax_amount",
+            "mention_text": "$0.00"
+        },
+        {
+            "type": "total_amount",
+            "mention_text": "$24,150.00"
+        },
+        {
+            "type": "currency",
+            "mention_text": "USD"
+        }
+    ],
+    "line_items": [
+        {
+            "description": "Cloud Infrastructure Deployment",
+            "quantity": "1",
+            "unit_price": "$12,450.00",
+            "amount": "$12,450.00"
+        },
+        {
+            "description": "Custom Multi-Agent Integration",
+            "quantity": "1",
+            "unit_price": "$8,500.00",
+            "amount": "$8,500.00"
+        },
+        {
+            "description": "JIRA MCP Connector Support",
+            "quantity": "1",
+            "unit_price": "$3,200.00",
+            "amount": "$3,200.00"
+        }
+    ],
+    "raw_text_summary": "GS\nGLOBAL SOLUTIONS INC.\nEnterprise Services | Innovative Technology\n123 Tech Way, San Francisco, CA 94105, USA | glebalsolutionsinc.co\ncontact@globalsolutionsinc.co\nBILL TO:\nRETAIL SYSTEMS CORP.\nAttn: Procurement Dept.\n456 Commerce Blvd.\nChicago, IL 60611, USA\nINVOICE\nNumber: INV-2026-009\nDate: May 22, 2026\nDue Date: June 22, 2026\nDescription\nQuantity\nUnit Price Amount\nCloud Infrastructur"
+}
