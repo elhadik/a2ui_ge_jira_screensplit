@@ -1,0 +1,110 @@
+[
+  {
+    "surfaceUpdate": {
+      "surfaceId": "store-invoice-auditor-details",
+      "components": [
+        {
+          "id": "root",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": [
+                  "dashboard_card",
+                  "actions_row"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "dashboard_card",
+          "component": {
+            "Card": {
+              "child": "dashboard_iframe"
+            }
+          }
+        },
+        {
+          "id": "dashboard_iframe",
+          "component": {
+            "WebFrameSrcdoc": {
+              "htmlContent": {
+                "literalString": "<!DOCTYPE html><html lang='en'><head><script src='https://cdn.jsdelivr.net/npm/chart.js'></script><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'></head><body>...</body></html>"
+              },
+              "height": 480
+            }
+          }
+        },
+        {
+          "id": "actions_row",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": [
+                  "btn_approve",
+                  "btn_manual_jira"
+                ]
+              },
+              "alignment": "center",
+              "distribution": "spaceEvenly"
+            }
+          }
+        },
+        {
+          "id": "btn_approve_text",
+          "component": {
+            "Text": {
+              "text": {
+                "literalString": "✅ Approve & Archive"
+              }
+            }
+          }
+        },
+        {
+          "id": "btn_approve",
+          "component": {
+            "Button": {
+              "child": "btn_approve_text",
+              "action": {
+                "name": "approve_extraction"
+              }
+            }
+          }
+        },
+        {
+          "id": "btn_manual_jira_text",
+          "component": {
+            "Text": {
+              "text": {
+                "literalString": "🚨 File JIRA Ticket"
+              }
+            }
+          }
+        },
+        {
+          "id": "btn_manual_jira",
+          "component": {
+            "Button": {
+              "child": "btn_manual_jira_text",
+              "action": {
+                "name": "file_jira_ticket"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "dataModelUpdate": {
+      "surfaceId": "store-invoice-auditor-details",
+      "contents": []
+    }
+  },
+  {
+    "beginRendering": {
+      "surfaceId": "store-invoice-auditor-details",
+      "root": "root"
+    }
+  }
+]

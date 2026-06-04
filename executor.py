@@ -49,6 +49,8 @@ def _sanitize_json(raw: str) -> str:
         s = s[len("```"):]
     if s.endswith("```"):
         s = s[:-len("```")]
+    # Strip line-continuation backslashes before newlines
+    s = re.sub(r'\\\s*\n', '\n', s)
     return s.strip()
 
 def _create_a2ui_part(data: dict) -> Part:
@@ -157,6 +159,40 @@ class StoreAuditorExecutor(AgentExecutor):
 
                     if answer_text:
                         final_parts = parse_response_to_parts(answer_text)
+                        
+                        # Self-healing: check if we have A2UI parts. If not, programmatically append the dashboard!
+                        has_a2ui = any(
+                            isinstance(part.root, DataPart) and part.root.metadata.get("mimeType") == A2UI_MIME_TYPE
+                            for part in final_parts
+                        )
+                        if not has_a2ui:
+                            logger.info("No A2UI dashboard component successfully parsed from LLM text response. Self-healing on the backend...")
+                            try:
+                                try:
+                                    from .components import _LAST_ANALYSIS_RESULTS, generate_audit_a2ui_dashboard_tool
+                                except ImportError:
+                                    from components import _LAST_ANALYSIS_RESULTS, generate_audit_a2ui_dashboard_tool
+                                if _LAST_ANALYSIS_RESULTS:
+                                    logger.info(f"Self-healing: Found cached analysis results for merchant: {_LAST_ANALYSIS_RESULTS.get('merchant_name')}. Rebuilding dashboard A2UI block...")
+                                    a2ui_block = generate_audit_a2ui_dashboard_tool("")
+                                    # Strip tag wrapper
+                                    if a2ui_block.startswith("<a2ui-json>"):
+                                        a2ui_block = a2ui_block[len("<a2ui-json>"):].strip()
+                                    if a2ui_block.endswith("</a2ui-json>"):
+                                        a2ui_block = a2ui_block[:-len("</a2ui-json>")].strip()
+                                    
+                                    payload = json.loads(a2ui_block)
+                                    if isinstance(payload, list):
+                                        for item in payload:
+                                            final_parts.append(_create_a2ui_part(item))
+                                    else:
+                                        final_parts.append(_create_a2ui_part(payload))
+                                    logger.info("✓ Self-healed: Programmatically appended visual A2UI dashboard part to final parts!")
+                                else:
+                                    logger.warning("Unable to self-heal: _LAST_ANALYSIS_RESULTS cache is empty.")
+                            except Exception as a2ui_err:
+                                logger.error(f"Failed to programmatically append A2UI dashboard: {a2ui_err}")
+
                         await updater.update_status(
                             TaskState.completed,
                             new_agent_parts_message(

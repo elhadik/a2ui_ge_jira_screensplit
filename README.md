@@ -69,6 +69,42 @@ Here is the flow of a request from the user to the agent and back:
 - **A2A (Agent-to-Agent)**: The arrows between *Gemini Enterprise* and *Custom Agent* represent the A2A protocol. It passes the user's intent and context in a standard request, and receives the answer (both text and UI) in a standard response.
 - **A2UI (Agent UI)**: The step where the *Custom Agent* wraps the data in `a2ui-json` and returns it, and *Gemini Enterprise* renders the VegaChart, illustrates the A2UI extension. The agent dictates the UI structure, and the platform handles the rendering.
 
+### 🖥️ How Split-Screen Layouts are Coded and Rendered
+
+Gemini Enterprise features a native **split-screen display** layout that splits the workspace between the standard text chat feed (left side) and a rich visual workspace pane (right side). 
+
+This split-screen behavior is completely dynamic and agent-driven:
+
+#### 1. The Declarative JSON Trigger
+To render a component on the right-side split screen, the agent includes an `a2ui-json` structure containing a `surfaceId` and wraps the layout content in a `WebFrameSrcdoc` component block:
+
+```json
+{
+  "surfaceUpdate": {
+    "surfaceId": "store-invoice-auditor-chart",
+    "components": [
+      {
+        "id": "root",
+        "component": {
+          "WebFrameSrcdoc": {
+            "htmlContent": {
+              "literalString": "<!DOCTYPE html><html>...</html>"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+#### 2. Automatic Routing in Gemini Enterprise
+- **Routing Rules**: The Gemini Enterprise client reads the `surfaceId` and determines the layout container. Large-format, complex, or interactive components like `WebFrameSrcdoc` are automatically routed to occupy the wide right split-screen panel.
+- **HTML Container Rendering**: Inside the split-screen panel, Gemini Enterprise instantiates a secure iframe sandboxed with safe execution headers (enforced via Content Security Policy `connect-src 'none'`), rendering the `literalString` HTML content.
+- **JavaScript & Event Handling**: The HTML components interact dynamically. In our codebase, the list of vertical sliders in [components.py](components.py) listens to `oninput` events, recalculates totals inside standard JS, updates the SVG sectors dynamically, and presents warnings without making roundtrip requests to the server, resulting in a fast, latency-free desktop experience.
+
+---
+
 ### 🧩 The Synergy: Multi-Agent, MCP, and A2UI Working Together
 
 This application brings together three distinct paradigms in agentic workflows to deliver a structured retail receipt auditor:
@@ -140,27 +176,36 @@ If the Gemini Visual Auditor flags any discrepancies or anomalies (Confidence Sc
 
 ---
 
-## 📁 Flat Staging Reorganized Package Structure
+## 📁 Reorganized Package Structure
 
-The project utilizes a **Hybrid Layout** that seamlessly supports local developer CLI emulators (`adk web`, `adk run` which seek flat entry points) and serverless Google Cloud Vertex AI Reasoning Engine Builders (which require subdirectory python packages in `extra_packages` configuration parameters):
+The project directory has been structured to cleanly separate core runtime code, deployment utilities, and visual tests:
 
 ```text
-GE_fileagent_a2ui/
+GE_A2UI/
 ├── agent.py             # Root wrapper entry point (exposing root_agent)
 ├── executor.py          # Custom StoreAuditorExecutor executing A2A protocol
-├── tools.py             # Custom tools (including audit_invoice_tool & analyze_uploaded_invoice_tool)
+├── tools.py             # Custom tools (including audit_invoice_tool)
+├── components.py        # Sleek A2UI HTML/CSS/JS dashboard mockup components
 ├── document_parser.py   # Document AI parser client
 ├── gemini_parser.py     # Gemini visual auditor client
-├── adk_app.py           # adk web entry point
-├── deploy.py            # Unified deploy script
-├── register.py          # Dynamic registration helper script
-├── pyproject.toml       # Poetry/UV workspace configuration
+├── adk_app.py           # Local ADK web entry point
+├── pyproject.toml       # Python workspace configuration
 ├── requirements.txt     # Pinned container dependencies
-├── .env                 # Configuration tokens (Vertex AI, GCS, JIRA)
-├── README.md            # Unified Deployment and Architecture Guide
-├── assets/              # High-resolution visual diagram and B2B invoice assets
-├── examples/            # Catalog A2UI JSON examples
-└── tests/               # Integration test suite
+├── .env                 # Local configuration variables (GCS, JIRA, slots)
+├── README.md            # Unified deployment and architecture guide
+├── assets/              # B2B invoice assets and architectural diagrams
+├── examples/            # Reference A2UI JSON catalog schemas
+├── deployment/          # Deployment and registration utilities
+│   ├── deploy.py              # Main build, deploy, and auto-cleanup orchestrator
+│   ├── register.py            # Registration helper
+│   ├── check_agent_auths.py   # Status checker for registered slots
+│   ├── find_free_slots.py     # Scanner for unused authorization slots
+│   ├── get_engine_logs.py     # Cloud logging retrieval script
+│   ├── list_auths.py          # List registered slots helper
+│   └── list_and_delete_agents.py # Legacy card cleanup helper
+└── tests/               # Test suites and layout mockups
+    ├── test_local_auditor.py  # Local agent execution test suite
+    └── invoice_dashboard.html # Standalone preview of visual dashboard
 ```
 
 ---
@@ -189,7 +234,7 @@ JIRA_EMAIL=<USER_EMAIL>
 JIRA_API_TOKEN=<YOUR_ATLASSIAN_PAT_TOKEN>
 
 # 5. Gemini Enterprise Authorization Slot
-AGENT_AUTHORIZATION=projects/<YOUR_PROJECT_NUMBER>/locations/global/authorizations/combined-auth-v28
+AGENT_AUTHORIZATION=projects/<YOUR_PROJECT_NUMBER>/locations/global/authorizations/combined-auth-v55
 ```
 
 ---
@@ -246,7 +291,7 @@ When `JIRA_MCP_URL` is configured, the agent automatically routes all ticketing 
 
 Gemini Enterprise requires agents deployed via Agent Engine to have a unique **Authorization Resource** to securely communicate with user-facing interfaces.
 
-If the cloud platform locks a soft-deleted authorization slot during redeployments, register the next sequential ID (`combined-auth-v28`, `combined-auth-v29`, etc.) to instantly bypass the cache:
+If the cloud platform locks a soft-deleted authorization slot during redeployments, register the next sequential ID (`combined-auth-v55`, `combined-auth-v56`, etc.) to instantly bypass the cache:
 
 ### Step 1: Create an OAuth 2.0 Client ID
 1. Go to the **Google Cloud Console**.
@@ -259,7 +304,7 @@ If the cloud platform locks a soft-deleted authorization slot during redeploymen
 6. Click **Create** and copy the `client_id` and `client_secret`.
 
 ### Step 2: Create the Authorization Resource
-Run this `curl` command in your terminal to register the credentials (replace `<AUTH_ID>` with a clean sequential name like `combined-auth-v28`):
+Run this `curl` command in your terminal to register the credentials (replace `<AUTH_ID>` with a clean sequential name like `combined-auth-v55`):
 
 ```bash
 curl -X POST \
@@ -297,7 +342,13 @@ cp -r * /tmp/adk_agents/GE_fileagent_a2ui/
 cp .env /tmp/adk_agents/GE_fileagent_a2ui/
 ```
 
-### Step 3: Test via CLI REPL
+### Step 3: Run the local integration test suite
+To execute a complete local mock test run of the agent pipeline (extracting with multimodal OCR, auditing validation accuracy, GCS archiving, and verifying JIRA ticket generation) in-memory, run:
+```bash
+python3 tests/test_local_auditor.py
+```
+
+### Step 4: Test via CLI REPL
 Verify that all sibling import fallbacks and Document AI parsers resolve correctly in-memory:
 ```bash
 export GOOGLE_API_USE_CLIENT_CERTIFICATE=false
@@ -323,11 +374,18 @@ Navigate to **`http://127.0.0.1:8000`**, open `GE_fileagent_a2ui`, drag and drop
 ## ☁️ Cloud Deployment & Gemini Enterprise Registration
 
 ### Step 1: Deploy to Vertex AI Reasoning Engine
-Deploy your custom Reasoning Engine to the cloud:
+The main deployment orchestrator script `deploy.py` is located in the `deployment/` directory. It automatically:
+- Scans for free authorization slots on Gemini Enterprise.
+- Dynamically creates the slot if missing.
+- Packages and deploys the agent to Vertex AI Reasoning Engine.
+- Updates `.env` configuration.
+- Automatically cleans up and purges all old/stale agent cards registered on the assistant panel to avoid duplicates.
+
+Deploy the agent to the cloud:
 ```bash
-uv run deploy.py
+python3 deployment/deploy.py
 ```
-Copy the returned **Reasoning Engine Resource ID** (for example: `projects/943928157761/locations/us-central1/reasoningEngines/3531370214404915200`).
+Copy the returned **Reasoning Engine Resource ID** (for example: `projects/943928157761/locations/us-central1/reasoningEngines/8786376088197529600`).
 
 ### Step 2: Register as a Custom Agent on Gemini Enterprise Console
 If registering directly, paste this exact specification under **Discovery Engine Console -> Agent Search -> Register Custom Agent**:
@@ -375,6 +433,16 @@ If registering directly, paste this exact specification under **Discovery Engine
 
 ### Step 3: Test in Chat Interface
 Open the chat assistant in **Gemini Enterprise**, select **`store_auditor_a2ui`**, drag and drop your receipt, and watch the visual pie chart render natively in real-time!
+
+---
+
+## 📚 Vibe Coding Reference Guides
+
+For developers who want to vibe-code, customize components, or extend the agent UI styling and routing behaviors, we have included the core platform instruction reference guides in this repository under the `skills/` directory:
+
+*   **[A2UI Widgets Reference Manual](skills/a2ui-widgets.md)**: Standard developer manual for creating, styling, and rendering premium custom widgets, cards, Vega charts, lists, and form overrides in Gemini Enterprise.
+*   **[A2UI Hybrid Deployment Architectures Guide](skills/a2ui-hybrid-deployment.md)**: Details standard workflows for staging, packaging, and registering standalone or JIRA-integrated A2UI agents on Google Cloud.
+*   **[ADK Enterprise File Reader Guide](skills/adk-enterprise-file-reader.md)**: Explains the native ADK framework logic for parsing user-uploaded images and documents in the playground interface.
 
 ---
 

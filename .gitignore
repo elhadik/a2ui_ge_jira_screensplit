@@ -1,0 +1,10 @@
+# Python cache and compilations
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+.venv_311/
+
+# Local sensitive environment variables and credentials
+.env

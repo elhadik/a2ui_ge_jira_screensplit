@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta content="connect-src 'none'" http-equiv="Content-Security-Policy">
+    <title>Store Invoice Auditing Dashboard</title>
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #38bdf8;
+            --accent-secondary: #818cf8;
+            --border-color: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 12px;
+            box-sizing: border-box;
+            font-size: 13px;
+        }
+        .dashboard-header {
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dashboard-header h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .dashboard-header p {
+            color: var(--text-secondary);
+            margin: 2px 0 0 0;
+            font-size: 0.75rem;
+        }
+        .kpi-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .kpi-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 10px;
+            flex: 1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .kpi-card.success { border-left: 3px solid var(--success); }
+        .kpi-card.warning { border-left: 3px solid var(--warning); }
+        .kpi-card.danger { border-left: 3px solid var(--danger); }
+        .kpi-title { font-size: 0.62rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em; }
+        .kpi-value { font-size: 1.05rem; font-weight: 700; margin: 2px 0; }
+        .kpi-sub { font-size: 0.68rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 12px;
+        }
+        @media (max-width: 640px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        .panel {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .panel-header {
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+        }
+        th, td { padding: 6px 4px; }
+        tr { border-bottom: 1px solid var(--border-color); }
+        tr:last-child { border-bottom: none; }
+        
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .slider-group {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 8px;
+        }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+        .slider-label { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px; }
+        .slider-value { color: var(--accent-primary); font-weight: 700; }
+        .slider-input { width: 100%; height: 4px; border-radius: 2px; background: var(--border-color); cursor: pointer; }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            overflow-y: auto;
+            max-height: 130px;
+        }
+        .chart-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-label {
+            width: 75px;
+            color: var(--text-secondary);
+            font-size: 0.68rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .chart-bar-wrapper {
+            flex: 1;
+            background: var(--border-color);
+            height: 10px;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+        .chart-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            border-radius: 3px;
+            transition: width 0.2s ease-in-out;
+            width: 0%;
+        }
+        .chart-value {
+            width: 55px;
+            text-align: right;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-size: 0.7rem;
+        }
+
+        .status-bar {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease-in-out;
+        }
+        .status-bar.override {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .status-title { font-weight: 700; color: var(--success); font-size: 0.8rem; }
+        .status-title.override { color: var(--danger); }
+        .status-desc { font-size: 0.72rem; color: var(--text-secondary); }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge.success { background: rgba(16, 185, 129, 0.12); color: var(--success); }
+        .badge.warning { background: rgba(245, 158, 11, 0.12); color: var(--warning); }
+        .badge.danger { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <div>
+            <h1 id="db-title">Invoice Audit Dashboard</h1>
+            <p id="db-subtitle">Multi-Agent OCR & Compliance Diagnostics</p>
+        </div>
+        <div id="header-badge">
+            <!-- Merchant name badge -->
+        </div>
+    </div>
+
+    <div class="kpi-container" id="kpi-container">
+        <!-- Dynamic KPIs -->
+    </div>
+
+    <div class="grid-layout">
+        <!-- Left Panel: Extracted Data Table -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>Extracted Line Items</span>
+                <span id="table-total" style="color: var(--accent-primary);">Total: $0.00</span>
+            </div>
+            <div class="table-container">
+                <table id="items-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th style="text-align: center; width: 40px;">Qty</th>
+                            <th style="text-align: right; width: 60px;">Price</th>
+                            <th style="text-align: right; width: 70px;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Table rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Panel: Interactive Adjuster & Live Chart -->
+        <div class="panel">
+            <div class="panel-header">Expense Adjuster & Live Chart</div>
+            
+            <div class="chart-container" id="live-chart-container">
+                <!-- Dynamic CSS bar chart -->
+            </div>
+
+            <div class="slider-container" id="sliders-list">
+                <!-- Interactive price sliders -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Status Acceptance Bar -->
+    <div class="status-bar" id="status-bar">
+        <div>
+            <div class="status-title" id="status-title">Gemini Extraction Accepted</div>
+            <div class="status-desc" id="status-desc">Extracted total matches audited total. Pipeline validated.</div>
+        </div>
+        <div id="status-score-badge" class="badge success">
+            Confidence: 100%
+        </div>
+    </div>
+
+    <script>
+        var data = window.INJECTED_DATA || {};
+        var chartInstance = null;
+        var lineItems = [];
+        var originalTotal = 0;
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'INJECT_DATA') {
+                data = event.data.payload || {};
+                init();
+            }
+        });
+
+        function init() {
+            if (data.merchant_name) {
+                document.getElementById('db-title').innerText = data.merchant_name + ' Invoice Audit';
+                document.getElementById('header-badge').innerHTML = "<span class='badge success' style='font-size:0.75rem'>" + data.merchant_name + "</span>";
+            }
+            else {
+                document.getElementById('db-title').innerText = 'Invoice Audit';
+            }
+            
+            lineItems = data.line_items || [];
+            
+            originalTotal = parseFloat(data.total || 0);
+            if (!originalTotal) {
+                originalTotal = lineItems.reduce(function(sum, item) { return sum + parseFloat(item.amount || 0); }, 0);
+            }
+
+            var kpiCont = document.getElementById('kpi-container');
+            kpiCont.innerHTML = '';
+
+            var score = data.confidence_score || '5/5';
+            var scoreNum = parseFloat(score.split('/')[0]) || 5;
+            var confidenceStatus = 'success';
+            if (scoreNum < 4) confidenceStatus = 'warning';
+            if (scoreNum < 3) confidenceStatus = 'danger';
+
+            var kpiConfidence = document.createElement('div');
+            kpiConfidence.className = 'kpi-card ' + confidenceStatus;
+            kpiConfidence.innerHTML = '<div class="kpi-title">Confidence Score</div><div class="kpi-value" style="color: var(--accent-primary);">' + score + '</div><div class="kpi-sub">Visual audit score</div>';
+            kpiCont.appendChild(kpiConfidence);
+
+            var kpiTotal = document.createElement('div');
+            kpiTotal.className = 'kpi-card success';
+            kpiTotal.innerHTML = '<div class="kpi-title">Audited Total</div><div class="kpi-value" id="kpi-total-val">$' + originalTotal.toFixed(2) + '</div><div class="kpi-sub">Extracted sum</div>';
+            kpiCont.appendChild(kpiTotal);
+
+            var routing = data.routing_status || 'Success';
+            var bucket = data.routing_bucket || 'shade-sandbox-processed';
+            var routingStatusClass = routing.toLowerCase().indexOf('error') !== -1 ? 'danger' : 'success';
+            if (routing.toLowerCase().indexOf('skipped') !== -1 || routing.toLowerCase().indexOf('missing') !== -1) routingStatusClass = 'warning';
+            
+            var kpiRouting = document.createElement('div');
+            kpiRouting.className = 'kpi-card ' + routingStatusClass;
+            kpiRouting.innerHTML = '<div class="kpi-title">GCS Archiving</div><div class="kpi-value" style="font-size: 0.95rem;">' + routing + '</div><div class="kpi-sub" title="' + bucket + '">Bucket: ' + bucket + '</div>';
+            kpiCont.appendChild(kpiRouting);
+
+            var jira = data.jira_status || 'Skipped (Perfect)';
+            var jiraStatusClass = 'success';
+            if (jira.toLowerCase().indexOf('created') !== -1 || jira.toLowerCase().indexOf('success') !== -1) jiraStatusClass = 'warning';
+            if (jira.toLowerCase().indexOf('error') !== -1) jiraStatusClass = 'danger';
+
+            var kpiJira = document.createElement('div');
+            kpiJira.className = 'kpi-card ' + jiraStatusClass;
+            kpiJira.innerHTML = '<div class="kpi-title">JIRA Review</div><div class="kpi-value" style="font-size: 0.95rem;">' + jira + '</div><div class="kpi-sub">Manual review ticket</div>';
+            kpiCont.appendChild(kpiJira);
+
+            renderTableAndSliders();
+            renderChart();
+        }
+
+        function renderTableAndSliders() {
+            var tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            var slidersList = document.getElementById('sliders-list');
+            slidersList.innerHTML = '';
+
+            lineItems.forEach(function(item, index) {
+                var tr = document.createElement('tr');
+                tr.id = 'tr_' + index;
+                tr.innerHTML = '<td style="font-weight: 600;">' + item.item + '</td><td style="text-align: center;" id="td_qty_' + index + '">' + item.quantity + '</td><td style="text-align: right;" id="td_price_' + index + '">$' + parseFloat(item.unit_price).toFixed(2) + '</td><td style="text-align: right; font-weight: 700; color: var(--accent-primary);" id="td_amount_' + index + '">$' + parseFloat(item.amount).toFixed(2) + '</td>';
+                tbody.appendChild(tr);
+
+                var maxPrice = Math.max(parseFloat(item.unit_price) * 3, 10.0);
+                var sliderGroup = document.createElement('div');
+                sliderGroup.className = 'slider-group';
+                sliderGroup.innerHTML = '<div class="slider-header"><span class="slider-label" title="' + item.item + '">' + item.item + '</span><span class="slider-value" id="slider_val_' + index + '">$' + parseFloat(item.unit_price).toFixed(2) + '</span></div><input class="slider-input" type="range" id="slider_input_' + index + '" min="0" max="' + maxPrice.toFixed(1) + '" value="' + item.unit_price + '" step="0.01" oninput="updateItemPrice(' + index + ')">';
+                slidersList.appendChild(sliderGroup);
+            });
+
+            updateTotals(false);
+        }
+
+        function updateItemPrice(index) {
+            var input = document.getElementById('slider_input_' + index);
+            var priceVal = parseFloat(input.value);
+            
+            document.getElementById('slider_val_' + index).textContent = '$' + priceVal.toFixed(2);
+
+            lineItems[index].unit_price = priceVal;
+            lineItems[index].amount = priceVal * lineItems[index].quantity;
+
+            document.getElementById('td_price_' + index).textContent = '$' + priceVal.toFixed(2);
+            document.getElementById('td_amount_' + index).textContent = '$' + lineItems[index].amount.toFixed(2);
+
+            updateTotals(true);
+        }
+
+        function updateTotals(isManualOverride) {
+            var currentTotal = 0;
+            lineItems.forEach(function(item) {
+                currentTotal += parseFloat(item.amount || 0);
+            });
+
+            document.getElementById('table-total').textContent = 'Total: $' + currentTotal.toFixed(2);
+            document.getElementById('kpi-total-val').textContent = '$' + currentTotal.toFixed(2);
+
+            var statusBar = document.getElementById('status-bar');
+            var statusTitle = document.getElementById('status-title');
+            var statusDesc = document.getElementById('status-desc');
+            var scoreBadge = document.getElementById('status-score-badge');
+
+            var diff = Math.abs(currentTotal - originalTotal);
+            var isDiscrepancy = diff > 0.01;
+
+            if (isDiscrepancy || isManualOverride) {
+                statusBar.classList.add('override');
+                statusTitle.classList.add('override');
+                statusTitle.innerText = '⚠️ Auditor Override Active';
+                statusDesc.innerText = 'Auditor modified parsed receipt extraction values. Gemini AI confidence rejected.';
+                scoreBadge.className = 'badge danger';
+                scoreBadge.innerText = 'Confidence: 0%';
+            } else {
+                statusBar.classList.remove('override');
+                statusTitle.classList.remove('override');
+                statusTitle.innerText = 'Gemini Extraction Accepted';
+                statusDesc.innerText = 'Extracted total matches audited total. Pipeline validated.';
+                scoreBadge.className = 'badge success';
+                scoreBadge.innerText = 'Confidence: 100%';
+            }
+
+            renderChart();
+        }
+
+        function renderChart() {
+            var container = document.getElementById('live-chart-container');
+            container.innerHTML = '';
+            
+            var maxAmount = Math.max.apply(Math, lineItems.map(function(item) { return item.amount; })) || 1.0;
+
+            lineItems.forEach(function(item) {
+                var pct = (item.amount / maxAmount) * 100;
+                var row = document.createElement('div');
+                row.className = 'chart-row';
+                
+                row.innerHTML = '<span class="chart-label" title="' + item.item + '">' + 
+                                (item.item.length > 12 ? item.item.substring(0, 10) + '...' : item.item) + 
+                                '</span>' +
+                                '<div class="chart-bar-wrapper">' +
+                                '<div class="chart-bar" style="width: ' + pct.toFixed(1) + '%"></div>' +
+                                '</div>' +
+                                '<span class="chart-value">$' + parseFloat(item.amount).toFixed(2) + '</span>';
+                
+                container.appendChild(row);
+            });
+        }
+
+        window.addEventListener('load', function() {
+            if (window.parent) {
+                window.parent.postMessage({ type: 'IFRAME_READY' }, '*');
+            }
+            if (data && Object.keys(data).length > 0) {
+                init();
+            }
+        });
+    </script>
+</body>
+</html>

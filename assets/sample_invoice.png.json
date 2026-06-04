@@ -23,7 +23,7 @@
         },
         {
             "type": "customer_address",
-            "mention_text": "456 Commerce Blvd. Chicago, IL 60611, USA"
+            "mention_text": "456 Commerce Blvd.\nChicago, IL 60611, USA"
         },
         {
             "type": "invoice_number",
@@ -74,5 +74,5 @@
             "amount": "$3,200.00"
         }
     ],
-    "raw_text_summary": "GS\nGLOBAL SOLUTIONS INC.\nEnterprise Services | Innovative Technology\n123 Tech Way, San Francisco, CA 94105, USA | glebalsolutionsinc.co\ncontact@globalsolutionsinc.co\nBILL TO:\nRETAIL SYSTEMS CORP.\nAttn: Procurement Dept.\n456 Commerce Blvd.\nChicago, IL 60611, USA\nINVOICE\nNumber: INV-2026-009\nDate: May 22, 2026\nDue Date: June 22, 2026\nDescription\nQuantity\nUnit Price Amount\nCloud Infrastructur"
+    "raw_text_summary": "GS\nGLOBAL SOLUTIONS INC.\nEnterprise Services | Innovative Technology\n123 Tech Way, San Francisco, CA 94105, USA | glebalsolutionsinc.co\ncontact@globalsolutionsinc.co\nBILL TO:\nRETAIL SYSTEMS CORP.\nAttn: Procurement Dept.\n456 Commerce Blvd.\nChicago, IL 60611, USA\nINVOICE\nNumber: INV-2026-009\nDate: May 22, 2026\nDue Date: June 22, 2026\nDescription\nQuantity\nUnit Price Amount\nCloud Infrastructure Deployment\n1\n$12,450.00 $12,450.00"
 }

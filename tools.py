@@ -18,6 +18,12 @@ import os
 
 logger = logging.getLogger(__name__)
 
+try:
+    from .components import _LAST_ANALYSIS_RESULTS, generate_audit_a2ui_dashboard_tool
+except ImportError:
+    from components import _LAST_ANALYSIS_RESULTS, generate_audit_a2ui_dashboard_tool
+
+
 
 
 
@@ -222,7 +228,16 @@ def audit_invoice_tool(file_path: str = None, data_bytes: bytes = None, mime_typ
   payload["gcs_routing"] = routing_data
   payload["jira_ticketing"] = jira_status
 
-  return json.dumps(payload)
+  _LAST_ANALYSIS_RESULTS.clear()
+  _LAST_ANALYSIS_RESULTS.update(payload)
+
+  # Auto-generate the premium dashboard UI block in-memory
+  a2ui_block = generate_audit_a2ui_dashboard_tool(json.dumps(payload))
+  
+  combined_output = f"Analysis Results:\n{json.dumps(payload, indent=2)}\n\nDashboard UI Block:\n{a2ui_block}"
+  return combined_output
+
+
 
 
 async def analyze_uploaded_invoice_tool(tool_context=None) -> str:
@@ -289,7 +304,17 @@ async def analyze_uploaded_invoice_tool(tool_context=None) -> str:
   # 3. Run the audit pipeline completely in-memory (No temporary files!)
   logger.info(f"[Audit Tool] Analyzing uploaded file in-memory: {filename} ({mime_type})")
   result = run_adk_orchestrator(filename=filename, mime_type=mime_type, data_bytes=data_bytes)
-  return json.dumps(result, indent=4)
+  
+  _LAST_ANALYSIS_RESULTS.clear()
+  _LAST_ANALYSIS_RESULTS.update(result)
+  
+  # Auto-generate the premium dashboard UI block in-memory
+  a2ui_block = generate_audit_a2ui_dashboard_tool(json.dumps(result))
+  
+  combined_output = f"Analysis Results:\n{json.dumps(result, indent=2)}\n\nDashboard UI Block:\n{a2ui_block}"
+  return combined_output
+
+
 
 
 def run_adk_orchestrator(filename: str, mime_type: str, data_bytes: bytes = None, file_path: str = None) -> dict:
@@ -328,6 +353,4 @@ def run_adk_orchestrator(filename: str, mime_type: str, data_bytes: bytes = None
     payload["jira_ticketing"] = jira_status
     
     return payload
-
-
 

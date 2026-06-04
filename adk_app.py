@@ -5,6 +5,6 @@ from google.adk.apps import App
 from agent import root_agent
 
 adk_app = AdkApp(
-    app=App(name='store_auditor_a2ui', root_agent=root_agent),
+    app=App(name='store_auditor_a2ui_v2', root_agent=root_agent),
     enable_tracing=True,
 )

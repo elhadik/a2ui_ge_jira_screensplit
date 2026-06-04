@@ -17,7 +17,8 @@ try:
         route_document_tool,
         create_jira_ticket_tool,
         analyze_uploaded_invoice_tool,
-        audit_invoice_tool
+        audit_invoice_tool,
+        generate_audit_a2ui_dashboard_tool
     )
 except ImportError:
     from tools import (
@@ -26,25 +27,37 @@ except ImportError:
         route_document_tool,
         create_jira_ticket_tool,
         analyze_uploaded_invoice_tool,
-        audit_invoice_tool
+        audit_invoice_tool,
+        generate_audit_a2ui_dashboard_tool
     )
 
 
-ROLE_DESCRIPTION = "You are the lead store invoice auditor coordinating a multi-agent pipeline. Your job is to audit retail store receipts, coordinate specialists, and generate beautiful interactive visual expense pie charts."
+
+ROLE_DESCRIPTION = "You are the lead store invoice auditor coordinating a multi-agent retail operations pipeline. Your job is to audit retail store receipts, coordinate specialists, and present a premium interactive visual audit dashboard and override workflow on the right-hand side panel."
 
 WORKFLOW_DESCRIPTION = """
-For Invoice Auditing & Expense Chart Queries:
-1. When the user uploads or refers to an invoice/receipt file in the session context, you MUST call the `analyze_uploaded_invoice_tool` to trigger the specialized multi-agent pipeline in-memory.
-2. Explain each step of the pipeline (Extraction, Audit validation, GCS routing, and JIRA support ticketing if applicable) in your final response.
-3. Parse the returned JSON from your tool, extracting the merchant name, subtotal, line items, tax, GCS bucket path, and JIRA ticket status.
-4. Generate a clean interactive VegaChart (using mark "arc" for a pie chart or donut chart) representing the visual expense breakdown of the final total (mapping each line item and the tax to a slice of the pie).
-5. Present the structured results and audit summary along with the pie chart.
+For Invoice Auditing & Expense Queries:
+1. When the user uploads or refers to a receipt/invoice file in the session context, you MUST call the `analyze_uploaded_invoice_tool` (or `audit_invoice_tool`) to trigger the OCR, Gemini visual auditing, routing, and A2UI generation pipeline.
+2. The tool automatically returns both the JSON analysis payload AND the pre-compiled `<a2ui-json>` dashboard XML block at the bottom of its output.
+3. You MUST print the returned `<a2ui-json>` XML block exactly as-is at the end of your response to render the premium side-panel dashboard. Do NOT modify, truncate, or rewrite any characters in the XML block!
+4. In your text summary, explain the audit steps taken:
+   - **OCR Extraction**: Store name, date, items extraction.
+   - **Gemini Visual Audit Validation**: Discrepancies assessment and confidence score.
+   - **GCS Archiving**: Routed bucket (processed vs review).
+   - **JIRA Ticketing Status**: Automated manual-review ticket generation.
+5. For Manual Discrepancy Override Trigger prompts (e.g., when the user prompts "File a JIRA manual review ticket due to audited discrepancies." triggered by A2UI action button clicks):
+   - Call `create_jira_ticket_tool` with a concise title (e.g., "AUDITOR OVERRIDE: Discrepancies found in store invoice") and a detailed description of the overridden values.
+   - Confirm to the user that the review ticket has been logged and manual override is active.
 """
 
 UI_DESCRIPTION = """
-- For invoice expense charts, you MUST generate an interactive pie/donut chart using the VegaChart component with `"mark": {"type": "arc", "outerRadius": 100, "tooltip": true}`. Set `"theta": {"field": "value", "type": "quantitative"}` and `"color": {"field": "category", "type": "nominal"}` in the encodings to represent each expense segment (line items and tax).
-- The chart or dashboard data MUST be wrapped in `<a2ui-json>` and `</a2ui-json>` tags. DO NOT output raw JSON without these tags.
+- You MUST copy and print the `<a2ui-json>` block returned by your tools exactly as-is. This renders the premium, dark-themed visual dashboard containing KPIs, line items table, reactive price sliders, dynamic override warning banner, and live Chart.js expense bar charts on the side-panel.
+- The dashboard surface also renders native action buttons right below it:
+  1. `"btn_approve"` ("✅ Approve & Archive"): Triggers user prompt validating extraction.
+  2. `"btn_manual_jira"` ("🚨 File JIRA Ticket"): Triggers user prompt to file a JIRA manual review ticket.
 """
+
+
 
 
 # --- Specialist Agent Definitions ---
@@ -105,8 +118,8 @@ def create_agent() -> Agent:
         role_description=ROLE_DESCRIPTION,
         workflow_description=WORKFLOW_DESCRIPTION,
         ui_description=UI_DESCRIPTION,
-        include_schema=True,
-        include_examples=True,
+        include_schema=False,
+        include_examples=False,
         validate_examples=False,
     )
 
@@ -114,11 +127,18 @@ def create_agent() -> Agent:
     orchestrator_agent = Agent(
         name="StoreInvoiceAuditorAgent",
         model=os.environ.get("GOOGLE_GENAI_MODEL", "gemini-2.5-flash"),
-        description="Lead Store Auditor orchestrating OCR, visual audit, routing, and A2UI charting.",
+        description="Lead Store Auditor orchestrating OCR, visual audit, routing, and premium dashboard visual override controls.",
         instruction=instruction,
-        tools=[load_artifacts, FunctionTool(analyze_uploaded_invoice_tool), audit_invoice_tool],
+        tools=[
+            load_artifacts, 
+            FunctionTool(analyze_uploaded_invoice_tool), 
+            FunctionTool(create_jira_ticket_tool),
+            audit_invoice_tool
+        ],
         sub_agents=[data_extractor_agent, validator_agent, scoring_routing_agent]
     )
+
+
 
     return orchestrator_agent
 
