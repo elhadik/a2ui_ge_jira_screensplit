@@ -383,8 +383,15 @@ The main deployment orchestrator script `deploy.py` is located in the `deploymen
 
 Deploy the agent to the cloud:
 ```bash
-python3 deployment/deploy.py
+# Must be executed from the root directory to ensure correct packaging namespaces
+PYTHONPATH=. python3 deployment/deploy.py
 ```
+
+> [!IMPORTANT]
+> **Packaging and Imports Gotchas**:
+> 1. **Relative Paths inside `extra_packages`**: In `deploy.py`, ensure all custom runtime files (`agent.py`, `executor.py`, etc.) are passed as flat relative paths in `extra_packages` (not absolute paths). Absolute paths result in nested folders inside the remote container, which breaks python imports (`ModuleNotFoundError`) at startup health checks.
+> 2. **Staging Storage Bucket**: Make sure `STORAGE_BUCKET` in `.env` points to the authorized `gs://shade-agent-staging` bucket so that the Vertex AI Reasoning Engine service account has permissions to download the code bundle during initialization.
+
 Copy the returned **Reasoning Engine Resource ID** (for example: `projects/943928157761/locations/us-central1/reasoningEngines/8786376088197529600`).
 
 ### Step 2: Register as a Custom Agent on Gemini Enterprise Console
