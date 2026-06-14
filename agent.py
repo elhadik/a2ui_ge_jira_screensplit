@@ -108,7 +108,7 @@ def create_agent() -> Agent:
                 version=VERSION_0_8,
                 examples_path=os.path.join(
                     os.path.dirname(__file__), "examples/0.8"
-                ),
+                ) if os.path.exists(os.path.join(os.path.dirname(__file__), "examples/0.8")) else None,
             )
         ],
         schema_modifiers=[remove_strict_validation],

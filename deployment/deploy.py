@@ -80,6 +80,7 @@ def _register_agent_on_gemini_enterprise(
 def main():
   root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
   load_dotenv(os.path.join(root_dir, ".env"))
+  os.chdir(root_dir)
 
   project_id = os.environ.get("PROJECT_ID")
   location = os.environ.get("LOCATION")
@@ -167,13 +168,12 @@ def main():
       },
       "max_instances": 1,
       "extra_packages": [
-          os.path.join(root_dir, "agent.py"),
-          os.path.join(root_dir, "executor.py"),
-          os.path.join(root_dir, "tools.py"),
-          os.path.join(root_dir, "components.py"),
-          os.path.join(root_dir, "document_parser.py"),
-          os.path.join(root_dir, "gemini_parser.py"),
-          os.path.join(root_dir, "examples"),
+          "agent.py",
+          "executor.py",
+          "tools.py",
+          "components.py",
+          "document_parser.py",
+          "gemini_parser.py",
       ],
 
       "env_vars": {
